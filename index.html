@@ -11,6 +11,29 @@
             try {
                 const { DateTime } = luxon;
                 const REFERENCE_TIME = DateTime.fromISO('2025-04-04T18:00:00', { zone: 'America/Los_Angeles' });
+                
+                // Add Google Calendar function
+                window.addToGoogleCalendar = function() {
+                    const localTime = REFERENCE_TIME.setZone(DateTime.local().zoneName);
+                    const endTime = localTime.plus({ hours: 1 }); // 1 hour duration
+                    
+                    const eventTitle = "this week's activity class";
+                    const startTimeStr = localTime.toISO();
+                    const endTimeStr = endTime.toISO();
+                    
+                    const description = `Class Link: https://us06web.zoom.us/j/3014159260\n` +
+                        `Meeting ID: 301 415 9260\n` +
+                        `Class Schedule: https://docs.google.com/spreadsheets/d/10jBhWPErydvuusPvsBM3qvdOwSWhBWIcc4kqZfi2Vhg/edit?gid=861821062#gid=861821062`;
+                    
+                    const url = `https://www.google.com/calendar/render?action=TEMPLATE` +
+                        `&text=${encodeURIComponent(eventTitle)}` +
+                        `&dates=${startTimeStr.replace(/[-:]/g, '').replace(/\.\d{3}/, '')}/${endTimeStr.replace(/[-:]/g, '').replace(/\.\d{3}/, '')}` +
+                        `&details=${encodeURIComponent(description)}` +
+                        `&ctz=${encodeURIComponent(DateTime.local().zoneName)}`;
+                    
+                    window.open(url, '_blank');
+                };
+                
                 const TIME_ZONES = [
                     { name: 'China', zone: 'Asia/Shanghai' },
                     { name: 'Adelaide', zone: 'Australia/Adelaide' },
@@ -317,9 +340,27 @@
                     <div class="dot" style="background: #3b82f6;"></div>
                     Your Local Time
                 </div>
-                <div id="localTime" class="local-time-display"></div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div id="localTime" class="local-time-display"></div>
+                    <button onclick="addToGoogleCalendar()" style="width: auto; padding: 0.5rem 1rem; margin-left: 1rem; font-size: 0.875rem;">
+                        Add to Google Calendar
+                    </button>
+                </div>
             </div>
             <div class="time-grid" id="timeGrid" style="grid-template-columns: repeat(3, 1fr); margin-top: 1rem;"></div>
+        </div>
+
+        <div class="card">
+            <h2>Class Calendar</h2>
+            <div style="display: flex; justify-content: center; overflow: hidden; border-radius: 0.5rem;">
+                <iframe 
+                    src="https://calendar.google.com/calendar/embed?src=d77dd50276ee3b6a3b67abaf3b9a7183a0fdb405a38d15921974a7200cec9478%40group.calendar.google.com&ctz=America%2FLos_Angeles" 
+                    style="border: 0; width: 100%; max-width: 800px;" 
+                    height="600" 
+                    frameborder="0" 
+                    scrolling="no">
+                </iframe>
+            </div>
         </div>
 
         <div class="card">
