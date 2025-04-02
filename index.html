@@ -342,6 +342,7 @@
         .container {
             max-width: 800px;
             margin: 0 auto;
+            padding: 0 1rem;
         }
 
         h1 {
@@ -357,6 +358,8 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             padding: 1.5rem;
             margin-bottom: 1rem;
+            width: 100%;
+            overflow: hidden;
         }
 
         .card h2 {
@@ -371,11 +374,12 @@
             padding: 1rem;
             border-radius: 0.5rem;
             margin-bottom: 1rem;
+            word-wrap: break-word;
         }
 
         .time-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(3, 1fr);
             gap: 1rem;
             margin-top: 1rem;
         }
@@ -475,6 +479,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1rem;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .timezone-selector {
@@ -482,6 +488,7 @@
             align-items: center;
             gap: 0.5rem;
             white-space: nowrap;
+            flex-wrap: wrap;
         }
 
         .timezone-selector span {
@@ -514,6 +521,104 @@
         .timezone-select option {
             background-color: white;
             color: #333;
+        }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 768px) {
+            body {
+                padding: 0.5rem;
+            }
+
+            .container {
+                padding: 0 0.5rem;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+            }
+
+            .card {
+                padding: 1rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .time-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .calendar-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+
+            .timezone-selector {
+                flex-direction: column;
+                align-items: flex-start;
+                width: 100%;
+            }
+
+            .timezone-select {
+                width: 100%;
+                min-width: unset;
+            }
+
+            iframe {
+                height: 400px !important;
+            }
+
+            .time-display {
+                padding: 0.75rem;
+            }
+
+            .time-display div:first-child {
+                font-size: 1.25rem !important;
+            }
+
+            .time-display div:last-child {
+                font-size: 1.125rem !important;
+            }
+
+            .time-box {
+                padding: 0.75rem;
+            }
+
+            .local-time-display > div:first-child {
+                font-size: 1.125rem !important;
+            }
+        }
+
+        /* Small Mobile Devices */
+        @media (max-width: 375px) {
+            body {
+                padding: 0.25rem;
+            }
+
+            .container {
+                padding: 0 0.25rem;
+            }
+
+            h1 {
+                font-size: 1.25rem;
+            }
+
+            .card {
+                padding: 0.75rem;
+            }
+
+            .time-display div:first-child {
+                font-size: 1.125rem !important;
+            }
+
+            .time-display div:last-child {
+                font-size: 1rem !important;
+            }
+
+            iframe {
+                height: 350px !important;
+            }
         }
     </style>
 </head>
