@@ -564,7 +564,7 @@
             </div>
             <div style="display: flex; justify-content: center; overflow: hidden; border-radius: 0.5rem;">
                 <iframe id="calendarFrame"
-                    src="https://calendar.google.com/calendar/embed?src=d77dd50276ee3b6a3b67abaf3b9a7183a0fdb405a38d15921974a7200cec9478%40group.calendar.google.com&ctz=America%2FLos_Angeles" 
+                    src="https://calendar.google.com/calendar/embed?src=d77dd50276ee3b6a3b67abaf3b9a7183a0fdb405a38d15921974a7200cec9478%40group.calendar.google.com&ctz=America%2FLos_Angeles&wkst=2" 
                     style="border: 0; width: 100%; max-width: 800px;" 
                     height="600" 
                     frameborder="0" 
@@ -629,9 +629,9 @@
             const calendarFrame = document.getElementById('calendarFrame');
             const currentSrc = calendarFrame.src;
             
-            // Update the calendar iframe URL with the new timezone
+            // Update the calendar iframe URL with the new timezone while preserving Monday start
             const baseUrl = currentSrc.split('&ctz=')[0];
-            const newSrc = `${baseUrl}&ctz=${encodeURIComponent(selectedTimezone)}`;
+            const newSrc = `${baseUrl}&ctz=${encodeURIComponent(selectedTimezone)}&wkst=2`;
             calendarFrame.src = newSrc;
             
             console.log('Calendar timezone updated to:', selectedTimezone);
