@@ -5,13 +5,168 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Time Zone Converter</title>
     <script src="https://moment.github.io/luxon/global/luxon.min.js"></script>
+    <!-- Add Google Calendar API -->
+    <script src="https://apis.google.com/js/api.js"></script>
     <script>
         // Initialize the application
         function initializeApp() {
             try {
                 const { DateTime } = luxon;
-                const REFERENCE_TIME = DateTime.fromISO('2025-04-04T18:00:00', { zone: 'America/Los_Angeles' });
                 
+                // Function to fetch and parse iCal data
+                async function fetchNextEvent() {
+                    console.log('Fetching next event...');
+                    const icalUrl = 'https://calendar.google.com/calendar/ical/d77dd50276ee3b6a3b67abaf3b9a7183a0fdb405a38d15921974a7200cec9478%40group.calendar.google.com/public/basic.ics';
+                    
+                    try {
+                        // Use a CORS proxy
+                        const proxyUrl = 'https://api.allorigins.win/raw?url=';
+                        const response = await fetch(proxyUrl + encodeURIComponent(icalUrl), {
+                            cache: 'no-store',
+                            mode: 'cors'  // Explicitly set CORS mode
+                        });
+                        
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        
+                        const data = await response.text();
+                        console.log('Calendar data fetched successfully');
+                        
+                        // Parse the iCal data
+                        const lines = data.split('\n');
+                        let events = [];
+                        let currentEvent = null;
+                        
+                        for (let line of lines) {
+                            line = line.trim();
+                            if (line.startsWith('BEGIN:VEVENT')) {
+                                currentEvent = {};
+                            } else if (line.startsWith('END:VEVENT')) {
+                                if (currentEvent && currentEvent.startTime && currentEvent.summary) {
+                                    events.push(currentEvent);
+                                }
+                                currentEvent = null;
+                            } else if (currentEvent) {
+                                if (line.startsWith('DTSTART')) {
+                                    // Handle both UTC and timezone-specific times
+                                    const parts = line.split(':');
+                                    const dateStr = parts[parts.length - 1];
+                                    if (dateStr.endsWith('Z')) {
+                                        // UTC time
+                                        const year = dateStr.substr(0, 4);
+                                        const month = dateStr.substr(4, 2);
+                                        const day = dateStr.substr(6, 2);
+                                        const hour = dateStr.substr(9, 2);
+                                        const minute = dateStr.substr(11, 2);
+                                        currentEvent.startTime = DateTime.fromObject({
+                                            year: parseInt(year),
+                                            month: parseInt(month),
+                                            day: parseInt(day),
+                                            hour: parseInt(hour),
+                                            minute: parseInt(minute)
+                                        }, { zone: 'UTC' }).setZone('America/Los_Angeles');
+                                    } else {
+                                        // Local time
+                                        const year = dateStr.substr(0, 4);
+                                        const month = dateStr.substr(4, 2);
+                                        const day = dateStr.substr(6, 2);
+                                        const hour = dateStr.substr(9, 2);
+                                        const minute = dateStr.substr(11, 2);
+                                        currentEvent.startTime = DateTime.fromObject({
+                                            year: parseInt(year),
+                                            month: parseInt(month),
+                                            day: parseInt(day),
+                                            hour: parseInt(hour),
+                                            minute: parseInt(minute)
+                                        }, { zone: 'America/Los_Angeles' });
+                                    }
+                                    console.log('Parsed event time:', currentEvent.startTime.toISO());
+                                } else if (line.startsWith('SUMMARY')) {
+                                    currentEvent.summary = line.split(':')[1];
+                                    console.log('Parsed event summary:', currentEvent.summary);
+                                }
+                            }
+                        }
+                        
+                        // Find the earliest upcoming event
+                        const now = DateTime.now().setZone('America/Los_Angeles');
+                        console.log('Current time (LA):', now.toISO());
+                        const upcomingEvents = events.filter(event => event.startTime > now);
+                        console.log('Found upcoming events:', upcomingEvents.length);
+                        
+                        if (upcomingEvents.length > 0) {
+                            const nextEvent = upcomingEvents.reduce((a, b) => 
+                                a.startTime < b.startTime ? a : b
+                            );
+                            console.log('Next event:', nextEvent.summary, 'at', nextEvent.startTime.toISO());
+                            
+                            // Set as reference time
+                            window.REFERENCE_TIME = nextEvent.startTime;
+                            
+                            // Update the display
+                            const referenceTimeElement = document.getElementById('californiaTime');
+                            if (referenceTimeElement) {
+                                const formattedTime = nextEvent.startTime.toFormat('EEEE, MMMM d, yyyy h:mm a');
+                                console.log('Setting reference time display to:', formattedTime);
+                                referenceTimeElement.textContent = formattedTime;
+                                
+                                // Update event title
+                                const eventTitleElement = document.querySelector('h2');
+                                if (eventTitleElement) {
+                                    eventTitleElement.textContent = `Next Coming Up Activity Class: ${nextEvent.summary}`;
+                                }
+                            }
+                            
+                            // Update all times
+                            updateTimes();
+                        } else {
+                            console.log('No upcoming events found');
+                            document.getElementById('californiaTime').textContent = 'No upcoming events';
+                        }
+                    } catch (error) {
+                        handleFetchError(error);
+                    }
+                }
+                
+                // Function to handle fetch errors gracefully
+                function handleFetchError(error) {
+                    console.warn('Calendar sync is currently unavailable:', error);
+                    const californiaTimeElement = document.getElementById('californiaTime');
+                    if (californiaTimeElement) {
+                        californiaTimeElement.innerHTML = `
+                            <div style="font-size: 1rem; color: #666;">
+                                Please refer to the calendar below for event times
+                            </div>
+                        `;
+                    }
+                }
+                
+                // Initial fetch when page loads
+                fetchNextEvent();
+                
+                // Refresh every minute
+                setInterval(fetchNextEvent, 60000);
+                
+                // Add event listener for iframe load
+                const calendarIframe = document.querySelector('iframe');
+                if (calendarIframe) {
+                    calendarIframe.addEventListener('load', () => {
+                        console.log('Calendar iframe loaded, refreshing events...');
+                        fetchNextEvent();
+                    });
+                }
+                
+                // Add visibility change listener to refresh when tab becomes visible
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') {
+                        console.log('Page became visible, refreshing events...');
+                        fetchNextEvent();
+                    }
+                });
+                
+                // Rest of your existing code...
+
                 // Add Google Calendar function
                 window.addToGoogleCalendar = function() {
                     const localTime = REFERENCE_TIME.setZone(DateTime.local().zoneName);
@@ -142,12 +297,6 @@
                 mediaQuery.addListener(handleMobileLayout);
                 handleMobileLayout(mediaQuery);
 
-                // Initialize times immediately
-                console.log('Initializing times...');
-                updateTimes();
-                // Update times every minute
-                setInterval(updateTimes, 60000);
-
                 // Make convertTime function globally available
                 window.convertTime = function() {
                     const timezone = document.getElementById('timezone').value;
@@ -176,7 +325,7 @@
             }
         }
 
-        // Start the app when DOM is loaded
+        // Add event listener for when the document is ready
         document.addEventListener('DOMContentLoaded', initializeApp);
     </script>
     <style>
@@ -323,6 +472,52 @@
                 gap: 1rem;
             }
         }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .timezone-selector {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+
+        .timezone-selector span {
+            color: #4b5563;
+            font-weight: 700;
+        }
+
+        .timezone-select {
+            padding: 0.5rem;
+            border: 1px solid #3b82f6;
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: #3b82f6;
+            color: white;
+            cursor: pointer;
+            min-width: 200px;
+        }
+
+        .timezone-select:hover {
+            border-color: #2563eb;
+            background-color: #2563eb;
+        }
+
+        .timezone-select:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .timezone-select option {
+            background-color: white;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -332,8 +527,8 @@
         <div class="card">
             <h2>This Week's Schedule</h2>
             <div class="time-display">
-                <div style="font-size: 1.5rem; margin-bottom: 0.75rem;">Reference Time (California)</div>
-                <div id="californiaTime" style="font-size: 1.5rem; font-weight: 600;"></div>
+                <div style="font-size: 1.5rem; margin-bottom: 0.75rem;">Next Event (California Time)</div>
+                <div id="californiaTime" style="font-size: 1.5rem; font-weight: 600;">Loading calendar data...</div>
             </div>
             <div class="time-box" style="margin-top: 1rem;">
                 <div class="city">
@@ -351,9 +546,22 @@
         </div>
 
         <div class="card">
-            <h2>Class Calendar</h2>
+            <div class="calendar-header">
+                <h2>Class Calendar</h2>
+                <div class="timezone-selector">
+                    <span>View in your own timezone:</span>
+                    <select id="calendarTimezone" class="timezone-select">
+                        <option value="America/Los_Angeles">Los Angeles</option>
+                        <option value="America/Chicago">Chicago</option>
+                        <option value="America/New_York">New York</option>
+                        <option value="Asia/Shanghai">China</option>
+                        <option value="Australia/Adelaide">Adelaide</option>
+                        <option value="Australia/Melbourne">Melbourne</option>
+                    </select>
+                </div>
+            </div>
             <div style="display: flex; justify-content: center; overflow: hidden; border-radius: 0.5rem;">
-                <iframe 
+                <iframe id="calendarFrame"
                     src="https://calendar.google.com/calendar/embed?src=d77dd50276ee3b6a3b67abaf3b9a7183a0fdb405a38d15921974a7200cec9478%40group.calendar.google.com&ctz=America%2FLos_Angeles" 
                     style="border: 0; width: 100%; max-width: 800px;" 
                     height="600" 
@@ -363,35 +571,70 @@
             </div>
         </div>
 
-        <div class="card">
-            <h2>Find California Time</h2>
-            <div class="form-group">
-                <label for="timezone">Select Time Zone</label>
-                <select id="timezone">
-                    <option value="Asia/Shanghai">China</option>
-                    <option value="Australia/Adelaide">Adelaide</option>
-                    <option value="Australia/Melbourne">Melbourne</option>
-                    <option value="America/New_York">New York</option>
-                    <option value="America/Chicago">Chicago</option>
-                </select>
-            </div>
-            <div class="form-grid">
-                <div class="form-group">
-                    <label for="date">Select Date</label>
-                    <input type="date" id="date">
-                </div>
-                <div class="form-group">
-                    <label for="hour">Select Hour</label>
-                    <select id="hour"></select>
-                </div>
-            </div>
-            <button onclick="convertTime()">Convert to California Time</button>
-            <div id="result" class="result" style="display: none;">
-                <div style="color: #6b7280; font-size: 0.875rem;">California time is</div>
-                <div id="convertedTime" style="font-size: 1.25rem; font-weight: 600; color: #1f2937;"></div>
-            </div>
-        </div>
+        <style>
+            .calendar-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1rem;
+            }
+
+            .timezone-selector {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                white-space: nowrap;
+            }
+
+            .timezone-selector span {
+                color: #4b5563;
+                font-weight: 700;
+            }
+
+            .timezone-select {
+                padding: 0.5rem;
+                border: 1px solid #3b82f6;
+                border-radius: 4px;
+                font-size: 0.9rem;
+                background-color: #3b82f6;
+                color: white;
+                cursor: pointer;
+                min-width: 200px;
+            }
+
+            .timezone-select:hover {
+                border-color: #2563eb;
+                background-color: #2563eb;
+            }
+
+            .timezone-select:focus {
+                outline: none;
+                border-color: #2563eb;
+                box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+            }
+
+            .timezone-select option {
+                background-color: white;
+                color: #333;
+            }
+        </style>
     </div>
+
+    <script>
+        // Add event listener for timezone selection
+        document.getElementById('calendarTimezone').addEventListener('change', function(e) {
+            const selectedTimezone = e.target.value;
+            const calendarFrame = document.getElementById('calendarFrame');
+            const currentSrc = calendarFrame.src;
+            
+            // Update the calendar iframe URL with the new timezone
+            const baseUrl = currentSrc.split('&ctz=')[0];
+            const newSrc = `${baseUrl}&ctz=${encodeURIComponent(selectedTimezone)}`;
+            calendarFrame.src = newSrc;
+            
+            console.log('Calendar timezone updated to:', selectedTimezone);
+        });
+    </script>
 
     <script>
         // Error handler for script loading
