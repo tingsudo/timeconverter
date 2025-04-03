@@ -485,33 +485,30 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
             gap: 1rem;
+            flex-wrap: wrap;
         }
 
         .timezone-selector {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
             white-space: nowrap;
-            flex-wrap: wrap;
         }
 
         .timezone-selector span {
             color: #4b5563;
-            font-weight: 700;
+            font-weight: 500;
         }
 
         .timezone-select {
             padding: 0.5rem;
             border: 1px solid #3b82f6;
             border-radius: 4px;
-            font-size: 1rem;
+            font-size: 0.9rem;
             background-color: #3b82f6;
             color: white;
             cursor: pointer;
-            min-width: 200px;
         }
 
         .timezone-select:hover {
@@ -661,10 +658,13 @@
 
         <div class="card">
             <div class="calendar-header">
-                <h2>Class Calendar</h2>
-                <div class="timezone-selector">
-                    <span>View in your own timezone:</span>
-                    <select id="calendarTimezone" class="timezone-select">
+                <div style="flex: 1;">
+                    <h2 style="margin-bottom: 0.25rem;">Class Google Calendar</h2>
+                    <div style="font-size: 0.75rem; color: #6b7280;">VPN may be needed if in China</div>
+                </div>
+                <div class="timezone-selector" style="flex: 1; justify-content: flex-end; align-items: center;">
+                    <span style="margin-right: 0.5rem; line-height: 1;">View calendar in your own timezone:</span>
+                    <select id="calendarTimezone" class="timezone-select" style="min-width: 150px; margin-top: 18px;">
                         <option value="America/Los_Angeles">Los Angeles</option>
                         <option value="America/Chicago">Chicago</option>
                         <option value="America/New_York">New York</option>
@@ -684,54 +684,6 @@
                 </iframe>
             </div>
         </div>
-
-        <style>
-            .calendar-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 1rem;
-            }
-
-            .timezone-selector {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                white-space: nowrap;
-            }
-
-            .timezone-selector span {
-                color: #4b5563;
-                font-weight: 700;
-            }
-
-            .timezone-select {
-                padding: 0.5rem;
-                border: 1px solid #3b82f6;
-                border-radius: 4px;
-                font-size: 0.9rem;
-                background-color: #3b82f6;
-                color: white;
-                cursor: pointer;
-                min-width: 200px;
-            }
-
-            .timezone-select:hover {
-                border-color: #2563eb;
-                background-color: #2563eb;
-            }
-
-            .timezone-select:focus {
-                outline: none;
-                border-color: #2563eb;
-                box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-            }
-
-            .timezone-select option {
-                background-color: white;
-                color: #333;
-            }
-        </style>
     </div>
 
     <script>
