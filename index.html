@@ -324,6 +324,66 @@
             console.warn('Calendar sync is currently unavailable:', error);
             // Page continues to work with current time
         }
+
+        // Add copy reminder function
+        function copyReminder() {
+            const californiaTimeElement = document.getElementById('californiaTime');
+            const eventTitleElement = document.querySelector('h2');
+            if (!californiaTimeElement || !eventTitleElement) {
+                console.error('Required elements not found');
+                return;
+            }
+
+            const californiaTime = californiaTimeElement.textContent.trim();
+            // Extract the activity name from the event title
+            const activityNameMatch = eventTitleElement.textContent.match(/Next Activity Class: "(.*?)"/);
+            const activityName = activityNameMatch ? activityNameMatch[1] : "Biology Activity Class";
+
+            // Check if it's a self-paced activity (case-insensitive)
+            const isSelfPaced = activityName.toLowerCase().includes('self-paced');
+
+            const reminderTemplate = isSelfPaced ? 
+                `[Reminder] This Week's Class: ${activityName}
+
+📢 Reserved Study Time (California Time): ${californiaTime}
+
+There will be no Zoom session this week.
+Please complete the lesson by watching the pre-recorded video on the course material website below:
+
+🌐 Course Schedule & Material: https://tinyurl.com/BioCourseSchedule
+🗓️ Time Zone-Friendly Calendar: https://calendar.xplorify.ai/` :
+                `[Reminder] This Week's Class: ${activityName}
+
+📢Start Time (California Time): ${californiaTime}
+Class Zoom Link: https://us06web.zoom.us/j/3014159260
+Meeting ID: 301 415 9260
+Password: 301415
+
+🌐 Course Schedule & Material: https://tinyurl.com/BioCourseSchedule
+🗓️ Time Zone-Friendly Calendar: https://calendar.xplorify.ai/`;
+
+            // Copy to clipboard
+            navigator.clipboard.writeText(reminderTemplate).then(() => {
+                // Show feedback
+                const button = document.querySelector('.copy-button');
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.backgroundColor = 'white';
+                button.style.color = '#1f2937';
+                button.style.borderColor = '#1f2937';
+                
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.backgroundColor = 'white';
+                    button.style.color = '#1f2937';
+                    button.style.borderColor = '#1f2937';
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                alert('Failed to copy reminder to clipboard');
+            });
+        }
     </script>
     <style>
         * {
@@ -624,6 +684,33 @@
                 height: 350px !important;
             }
         }
+
+        .copy-button {
+            background-color: white !important;
+            color: #1f2937;
+            border: 1px solid #1f2937;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 500;
+            height: 24px;
+            line-height: 1;
+        }
+
+        .copy-button:hover {
+            background-color: white !important;
+            border-color: #1f2937;
+        }
+
+        .copy-button:active {
+            background-color: white !important;
+        }
+
+        button.copy-button {
+            background: white !important;
+            background-color: white !important;
+        }
     </style>
 </head>
 <body>
@@ -631,7 +718,12 @@
         <h1><span>Xplorify</span> Time Zone Converter</h1>
 
         <div class="card">
-            <h2>This Week's Schedule</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h2>This Week's Schedule</h2>
+                <button onclick="copyReminder()" class="copy-button" style="margin-left: auto; width: auto; min-width: 80px; background-color: white !important; border: 1px solid #1f2937 !important;">
+                    Copy
+                </button>
+            </div>
             <div class="time-display">
                 <div style="font-size: 1.5rem; margin-bottom: 0.75rem;">California Time</div>
                 <div id="californiaTime" style="font-size: 1.5rem; font-weight: 600;">
